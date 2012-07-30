@@ -25,6 +25,7 @@
 
 #import "TKTableModel+Private.h"
 #import <objc/runtime.h>
+#import "TKGlobals.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -368,7 +369,7 @@ moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (TKCellMapping *)cellMappingForObject:(id)object {
-    __weak __block TKCellMapping *cellMapping = nil;
+    __tk_weak __block TKCellMapping *cellMapping = nil;
     
     dispatch_sync(_concurrentQueue, ^{
         NSSet *cellMappings = [TKCellMapper cellMappingsForObject:object mappings:self.objectMappings];

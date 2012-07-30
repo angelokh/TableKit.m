@@ -21,6 +21,7 @@
 #import "TKCellAttributeMapping.h"
 #import "TKDynamicCellMapping.h"
 
+#import "TKGlobals.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +56,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 + (TKCellMapping *)cellMappingForObject:(id)object mappings:(NSSet *)mappings {
-    __weak __block TKCellMapping *cellMappingForObject = [mappings anyObject];
+    __tk_weak __block TKCellMapping *cellMappingForObject = [mappings anyObject];
     BOOL isDynamicMapping = mappings.count > 1;
     
     if (isDynamicMapping) {
