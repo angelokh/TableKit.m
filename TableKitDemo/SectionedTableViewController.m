@@ -62,8 +62,18 @@
                        [Item itemWithTitle:@"Book8" subtitle:nil],
                        nil];
     
-    [self.tableModel loadTableItems:@[items1, items2]
-                       withSections:@[@"Section1", @"Section2"]];
+    NSArray *items = [NSArray arrayWithObjects:
+                      items1,
+                      items2,
+                      nil];
+    
+    NSArray *sections = [NSArray arrayWithObjects:
+                      @"Section1", 
+                      @"Section2",
+                      nil];
+    
+    [self.tableModel loadTableItems:items
+                       withSections:sections];
 }
 
 

@@ -89,6 +89,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		520760AE15C7CDCB0096CF84 /* TKGlobals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TKGlobals.h; sourceTree = "<group>"; };
 		E701694C15C6B13E002CB278 /* SectionedTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SectionedTableViewController.h; sourceTree = "<group>"; };
 		E701694D15C6B13E002CB278 /* SectionedTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SectionedTableViewController.m; sourceTree = "<group>"; };
 		E701695015C6B19B002CB278 /* TKSectionedTableModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TKSectionedTableModel.h; sourceTree = "<group>"; };
@@ -380,6 +381,7 @@
 		E725E8AA15AB543100407719 /* TableKit */ = {
 			isa = PBXGroup;
 			children = (
+				520760AE15C7CDCB0096CF84 /* TKGlobals.h */,
 				E722A02815ABEE0F003573C9 /* Private */,
 				E725E8AB15AB543100407719 /* TableKit.h */,
 				E725E8AC15AB543100407719 /* TKCellAttributeMapping.h */,
