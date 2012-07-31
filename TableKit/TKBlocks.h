@@ -42,3 +42,5 @@ typedef BOOL(^TKTableViewCanMoveObjectBlock)(id object, NSIndexPath *indexPath);
 typedef void(^TKTableViewMoveObjectBlock)(id object, NSIndexPath *sourceIndexPath, NSIndexPath *toIndexPath);
 
 typedef BOOL(^TKTableViewCanEditObjectBlock)(id object, NSIndexPath *indexPath, UITableViewCellEditingStyle editingStyle);
+
+typedef void(^TKScrollViewScrollBlock)(UIScrollView *scrollView);

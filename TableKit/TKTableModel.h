@@ -28,6 +28,8 @@
 
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, copy) TKObjectForRowAtIndexPathBlock objectForRowAtIndexPathBlock;
+@property (nonatomic, copy) TKScrollViewScrollBlock onScrollWithBlock;
+
 @property (nonatomic, readonly) NSMutableDictionary *objectMappings;
 
 /**
@@ -85,6 +87,11 @@
  @param block Block that return a model for the given indexPath
  */
 - (void)objectForRowAtIndexPathWithBlock:(TKObjectForRowAtIndexPathBlock)block;
+
+/**
+ Called when the row is scrolled
+ */
+- (void)onScrollWithBlock:(TKScrollViewScrollBlock)onScrollWithBlock;
 
 /**
  Return object at indexPath
