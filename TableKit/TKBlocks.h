@@ -35,7 +35,7 @@ typedef void(^TKTableViewCommitEditingStyleBlock)(id object, NSIndexPath *indexP
 
 typedef UITableViewCellEditingStyle(^TKTableViewEditingStyleBlock)(id object, NSIndexPath *indexPath);
 
-typedef UIView *(^TKTableViewForHeaderInSectionViewBlock)(UITableView *tableView, NSInteger section, NSString *title);
+typedef void(^TKScrollViewScrollBlock)(UIScrollView *scrollView);
 
 typedef BOOL(^TKTableViewCanMoveObjectBlock)(id object, NSIndexPath *indexPath);
 
@@ -43,4 +43,7 @@ typedef void(^TKTableViewMoveObjectBlock)(id object, NSIndexPath *sourceIndexPat
 
 typedef BOOL(^TKTableViewCanEditObjectBlock)(id object, NSIndexPath *indexPath, UITableViewCellEditingStyle editingStyle);
 
-typedef void(^TKScrollViewScrollBlock)(UIScrollView *scrollView);
+typedef UIView *(^TKTableViewForHeaderInSectionViewBlock)(UITableView *tableView, NSInteger section, NSString *title);
+
+typedef CGFloat(^TKHeightForHeaderInSectionBlock)(NSInteger section, NSString *title);
+

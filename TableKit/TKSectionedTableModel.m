@@ -16,7 +16,7 @@
 @synthesize items = _items;
 @synthesize sections = _sections;
 @synthesize viewForHeaderInSectionBlock = _viewForHeaderInSectionBlock;
-
+@synthesize heightForHeaderInSectionBlock = _heightForHeaderInSectionBlock;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)loadTableItems:(NSArray *)items withSections:(NSArray *)sections {
@@ -55,6 +55,10 @@
     _viewForHeaderInSectionBlock = [viewForHeaderInSectionBlock copy];
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)setHeightForHeaderInSectionBlock:(TKHeightForHeaderInSectionBlock)heightForHeaderInSectionBlock {
+    _heightForHeaderInSectionBlock = [heightForHeaderInSectionBlock copy];
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,6 +76,17 @@
     return nil;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    if ([self tableView:tableView titleForHeaderInSection:section] != nil) {
+        NSString *title = [self tableView:self.tableView titleForHeaderInSection:section];
+        return self.heightForHeaderInSectionBlock(section, title);
+    }
+    else {
+        // If no section header title, no section header needed
+        return 0;
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////

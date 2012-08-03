@@ -26,12 +26,19 @@
 @property (nonatomic, readonly, strong) NSMutableArray *sections;
 
 @property (nonatomic, copy, readonly) TKTableViewForHeaderInSectionViewBlock viewForHeaderInSectionBlock;
+@property (nonatomic, copy, readonly) TKHeightForHeaderInSectionBlock heightForHeaderInSectionBlock;
 
 /**
  Block that create a section view with title
  @param viewForHeaderInSectionBlock Block that will create the section view
  */
 - (void)setViewForHeaderInSectionWithBlock:(TKTableViewForHeaderInSectionViewBlock)viewForHeaderInSectionBlock;
+
+/**
+ Block that create a header for a section
+ @param heightForHeaderInSectionBlock Block that will return header for section
+ */
+- (void)setHeightForHeaderInSectionBlock:(TKHeightForHeaderInSectionBlock)heightForHeaderInSectionBlock;
 
 /**
  Load list of items into the tableview
