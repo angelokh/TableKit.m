@@ -13,30 +13,34 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 @implementation TKManagedTableModel
 
+@synthesize searchTableView = _searchTableView;
 @synthesize fetchedResultsController = _fetchedResultsController;
-
+@synthesize searchFetchedResultsController = _searchFetchedResultsController;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-- (id)objectForRowAtIndexPath:(NSIndexPath *)indexPath {
-    id object = [super objectForRowAtIndexPath:indexPath];
+- (id)objectForRowAtTableView:(UITableView*)tableView indexPath:(NSIndexPath *)indexPath {
+    id object = [self objectForRowAtIndexPath:indexPath];
     
     if (nil == object) {
-        return [self.fetchedResultsController objectAtIndexPath:indexPath];
+        return [[self fetchedResultsControllerForTableView:tableView] objectAtIndexPath:indexPath];
     }
-    
     return object;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (id)objectForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return nil; // force to use objectForRowAtTableView:indexPath:
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-- (NSInteger)numberOfSections {
-    return [[self.fetchedResultsController sections] count];
+- (NSInteger)numberOfSectionsAtTableView:(UITableView*)tableView {
+    return [[[self fetchedResultsControllerForTableView:tableView] sections] count];
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-- (NSInteger)numberOfRowsInSection:(NSInteger)section {
-    id <NSFetchedResultsSectionInfo> sectionInfo = [[self.fetchedResultsController sections] objectAtIndex:section];
+- (NSInteger)numberOfRowsInSection:(NSInteger)section atTableView:(UITableView*)tableView {
+    id <NSFetchedResultsSectionInfo> sectionInfo = [[[self fetchedResultsControllerForTableView:tableView] sections] objectAtIndex:section];
     return [sectionInfo numberOfObjects];
 }
 
@@ -46,13 +50,28 @@
     self.fetchedResultsController = block();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)setSearchFetchedResultsControllerWithBlock:(TKSearchFetchedResultsControllerBlock)block {
+    self.searchFetchedResultsController = block();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)loadItems {
     [self.fetchedResultsController performFetch:nil];
 }
 
+- (UITableViewCell *)cellForRowAtTableView:(UITableView*)tableView indexPath:(NSIndexPath *)indexPath
+{
+    id object = [self objectForRowAtTableView:tableView indexPath:indexPath];
+    return [super mapCellForObject:object];
+}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (CGFloat)heightForRowAtTableView:(UITableView*)tableView indexPath:(NSIndexPath *)indexPath
+{
+    id object = [self objectForRowAtTableView:tableView indexPath:indexPath];
+    return [super cellHeightForObject:object indexPath:indexPath];
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -66,6 +85,26 @@
     _fetchedResultsController.delegate = self;
 }
 
+- (void)setSearchFetchedResultsController:(NSFetchedResultsController *)searchFetchedResultsController {
+    _searchFetchedResultsController = searchFetchedResultsController;
+    _searchFetchedResultsController.delegate = self;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark -
+#pragma mark helper
+
+- (NSFetchedResultsController *)fetchedResultsControllerForTableView:(UITableView *)tableView
+{
+    return tableView == self.tableView ? self.fetchedResultsController : self.searchFetchedResultsController;
+}
+
+- (UITableView *)tableViewForFetchedResultsController:(NSFetchedResultsController *)controller
+{
+    UITableView *tableView = controller == self.fetchedResultsController ? self.tableView : self.searchTableView;
+    return tableView;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -74,29 +113,37 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return [self numberOfSections];
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return [self numberOfRowsInSection:section atTableView:tableView];
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [self numberOfRowsInSection:section];
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return [self numberOfSectionsAtTableView:tableView];
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    int count = [self numberOfSections];
+    int count = [self numberOfSectionsAtTableView:tableView];
     
     if (count > section) {
-        id sectionInfo = [[self.fetchedResultsController sections] objectAtIndex:section];
+        id sectionInfo = [[[self fetchedResultsControllerForTableView:tableView] sections] objectAtIndex:section];
         return [sectionInfo name];
     }
     
     return nil;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [self cellForRowAtTableView:tableView indexPath:indexPath];
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [self heightForRowAtTableView:tableView indexPath:indexPath];
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +153,9 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)controllerWillChangeContent:(NSFetchedResultsController *)controller {
-    [self.tableView beginUpdates];
+    UITableView *tableView = [self tableViewForFetchedResultsController:controller];
+
+    [tableView beginUpdates];
     
     if ([_fetchedResultsControllerDelegate respondsToSelector:@selector(controllerWillChangeContent:)]) {
         [_fetchedResultsControllerDelegate controllerWillChangeContent:controller];
@@ -121,7 +170,7 @@
      forChangeType:(NSFetchedResultsChangeType)type
       newIndexPath:(NSIndexPath *)newIndexPath {
     
-    UITableView *tableView = self.tableView;
+    UITableView *tableView = [self tableViewForFetchedResultsController:controller];
     
     switch(type) {
             
@@ -161,16 +210,18 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)controller:(NSFetchedResultsController *)controller didChangeSection:(id )sectionInfo atIndex:(NSUInteger)sectionIndex forChangeType:(NSFetchedResultsChangeType)type {
-    
+
+    UITableView *tableView = [self tableViewForFetchedResultsController:controller];
+
     switch(type) {
             
         case NSFetchedResultsChangeInsert:
-            [self.tableView insertSections:[NSIndexSet indexSetWithIndex:sectionIndex]
+            [tableView insertSections:[NSIndexSet indexSetWithIndex:sectionIndex]
                           withRowAnimation:UITableViewRowAnimationFade];
             break;
             
         case NSFetchedResultsChangeDelete:
-            [self.tableView deleteSections:[NSIndexSet indexSetWithIndex:sectionIndex]
+            [tableView deleteSections:[NSIndexSet indexSetWithIndex:sectionIndex]
                           withRowAnimation:UITableViewRowAnimationFade];
             break;
     }
@@ -186,12 +237,25 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)controllerDidChangeContent:(NSFetchedResultsController *)controller {
-    [self.tableView endUpdates];
+    UITableView *tableView = [self tableViewForFetchedResultsController:controller];
+    [tableView endUpdates];
     
     if ([_fetchedResultsControllerDelegate respondsToSelector:@selector(controllerDidChangeContent:)]) {
         [_fetchedResultsControllerDelegate controllerDidChangeContent:controller];
     }
 }
 
+#pragma mark - Content Filtering
+- (void)filterContentForSearchPredicate:(NSPredicate*)predicate
+{
+    [self.searchFetchedResultsController.fetchRequest setPredicate:predicate];
+    
+    NSError *error = nil;
+    if (![[self searchFetchedResultsController] performFetch:&error]) {
+        SHError(@"Unresolved error %@, %@", error, [error userInfo]);
+    }           
+    
+    [self.searchTableView reloadData];
+}
 
 @end

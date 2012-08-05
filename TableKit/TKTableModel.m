@@ -102,8 +102,6 @@
     [set addObject:cellMapping];
 }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     id object = [self objectForRowAtIndexPath:indexPath];
     TKCellMapping *cellMapping = [self cellMappingForObject:object];
@@ -115,8 +113,21 @@
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-- (CGFloat)heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)didSelectRowAtTableView:(UITableView *)tableView indexPath:(NSIndexPath *)indexPath {
     id object = [self objectForRowAtIndexPath:indexPath];
+    if (object == nil) {
+        object = [self objectForRowAtTableView:tableView indexPath:indexPath];
+    }
+    TKCellMapping *cellMapping = [self cellMappingForObject:object];
+    
+    if (nil != cellMapping.onSelectRowBlock) {
+        UITableViewCell *cell = [self cellForRowAtIndexPath:indexPath];
+        cellMapping.onSelectRowBlock(cell, object, indexPath);
+    }
+}
+
+- (CGFloat)cellHeightForObject:(id)object indexPath:(NSIndexPath *)indexPath
+{
     TKCellMapping *cellMapping = [self cellMappingForObject:object];
     
     CGFloat rowHeight = 0;
@@ -132,31 +143,6 @@
     return rowHeight;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    id object = [self objectForRowAtIndexPath:indexPath];
-    TKCellMapping *cellMapping = [self cellMappingForObject:object];
-    
-    if (nil != cellMapping.willDisplayCellBlock) {
-        cellMapping.willDisplayCellBlock(cell, object, indexPath);
-    }
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
-         forRowAtIndexPath:(NSIndexPath *)indexPath {
-    
-    id object = [self objectForRowAtIndexPath:indexPath];
-    TKCellMapping *cellMapping = [self cellMappingForObject:object];
-    
-    if (nil != cellMapping.commitEditingStyleBlock) {
-        cellMapping.commitEditingStyleBlock(object, indexPath, editingStyle);
-    }
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (UITableViewCellEditingStyle)editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
     id object = [self objectForRowAtIndexPath:indexPath];
@@ -169,7 +155,19 @@
     return UITableViewCellEditingStyleNone;
 }
 
-
+- (UITableViewCellEditingStyle)editingStyleAtTableView:(UITableView *)tableView forRowAtIndexPath:(NSIndexPath *)indexPath {
+    id object = [self objectForRowAtIndexPath:indexPath];
+    if (object == nil) {
+        object = [self objectForRowAtTableView:tableView indexPath:indexPath];
+    }
+    TKCellMapping *cellMapping = [self cellMappingForObject:object];
+    
+    if (nil != cellMapping.editingStyleBlock) {
+        return cellMapping.editingStyleBlock(object, indexPath);
+    }
+    
+    return UITableViewCellEditingStyleNone;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)objectForRowAtIndexPathWithBlock:(TKObjectForRowAtIndexPathBlock)block {
     self.objectForRowAtIndexPathBlock = block;
@@ -190,10 +188,14 @@
     return nil;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+- (id)objectForRowAtTableView:(UITableView*)tableView indexPath:(NSIndexPath *)indexPath {
+    return [self objectForRowAtIndexPath:indexPath];
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-- (UITableViewCell *)cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    id object = [self objectForRowAtIndexPath:indexPath];;
+- (UITableViewCell *)mapCellForObject:(id)object {
     TKCellMapping *cellMapping = [self cellMappingForObject:object];
     UITableViewCell *cell = nil;
     
@@ -214,7 +216,6 @@
     return cell;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)loadItems {
     [self.tableView reloadData];
@@ -224,6 +225,93 @@
 - (void)didScrollView:(UIScrollView *)scrollView {
     if (nil != self.onScrollWithBlock) {
         self.onScrollWithBlock(scrollView);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - UITableViewDataSource Helper
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (UITableViewCell *)cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    id object = [self objectForRowAtIndexPath:indexPath];;
+    return [self mapCellForObject:object];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (UITableViewCell *)cellForRowAtTableView:(UITableView *)tableView indexPath:(NSIndexPath *)indexPath
+{
+    id object = [self objectForRowAtIndexPath:indexPath];
+    if (object == nil) {
+        object = [self objectForRowAtTableView:tableView indexPath:indexPath];
+    }
+    return [self mapCellForObject:object];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (CGFloat)heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    id object = [self objectForRowAtIndexPath:indexPath];
+    return [self cellHeightForObject:object indexPath:indexPath];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (CGFloat)heightForRowAtTableView:(UITableView *)tableView indexPath:(NSIndexPath *)indexPath
+{
+    id object = [self objectForRowAtIndexPath:indexPath];
+    if (object == nil) {
+        object = [self objectForRowAtTableView:tableView indexPath:indexPath];
+    }
+    return [self cellHeightForObject:object indexPath:indexPath];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    id object = [self objectForRowAtIndexPath:indexPath];
+    TKCellMapping *cellMapping = [self cellMappingForObject:object];
+    
+    if (nil != cellMapping.willDisplayCellBlock) {
+        cellMapping.willDisplayCellBlock(cell, object, indexPath);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)willDisplayAtTableView:(UITableView *)tableView cell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    id object = [self objectForRowAtIndexPath:indexPath];
+    if (object == nil) {
+        object = [self objectForRowAtTableView:tableView indexPath:indexPath];
+    }
+    TKCellMapping *cellMapping = [self cellMappingForObject:object];
+    
+    if (nil != cellMapping.willDisplayCellBlock) {
+        cellMapping.willDisplayCellBlock(cell, object, indexPath);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
+         forRowAtIndexPath:(NSIndexPath *)indexPath {
+    
+    id object = [self objectForRowAtIndexPath:indexPath];
+    TKCellMapping *cellMapping = [self cellMappingForObject:object];
+    
+    if (nil != cellMapping.commitEditingStyleBlock) {
+        cellMapping.commitEditingStyleBlock(object, indexPath, editingStyle);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+- (void)commitAtTableView:(UITableView *)tableView editingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    id object = [self objectForRowAtIndexPath:indexPath];
+    if (object == nil) {
+        object = [self objectForRowAtTableView:tableView indexPath:indexPath];
+    }
+    TKCellMapping *cellMapping = [self cellMappingForObject:object];
+    
+    if (nil != cellMapping.commitEditingStyleBlock) {
+        cellMapping.commitEditingStyleBlock(object, indexPath, editingStyle);
     }
 }
 
@@ -247,13 +335,13 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return [self cellForRowAtIndexPath:indexPath];
+    return [self cellForRowAtTableView:tableView indexPath:indexPath];
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return [self heightForRowAtIndexPath:indexPath];
+    return [self heightForRowAtTableView:tableView indexPath:indexPath];
 }
 
 
@@ -262,7 +350,7 @@
   willDisplayCell:(UITableViewCell *)cell
 forRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    return [self willDisplayCell:cell forRowAtIndexPath:indexPath];
+    return [self willDisplayAtTableView:tableView cell:cell forRowAtIndexPath:indexPath];
 }
 
 
@@ -271,7 +359,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
 commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
 forRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    [self commitEditingStyle:editingStyle forRowAtIndexPath:indexPath];
+    [self commitAtTableView:tableView editingStyle:editingStyle forRowAtIndexPath:indexPath];
 }
 
 
@@ -311,7 +399,7 @@ moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    [self didSelectRowAtIndexPath:indexPath];
+    [self didSelectRowAtTableView:tableView indexPath:indexPath];
 }
 
 
@@ -319,7 +407,7 @@ moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath
 - (UITableViewCellEditingStyle)tableView:(UITableView *)tableView
            editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    return [self editingStyleForRowAtIndexPath:indexPath];
+    return [self editingStyleAtTableView:tableView forRowAtIndexPath:indexPath];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

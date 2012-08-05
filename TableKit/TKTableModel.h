@@ -62,25 +62,18 @@
 - (void)didSelectRowAtIndexPath:(NSIndexPath *)indexPath;
 
 /**
- Return the height of the row
+ Inform the model that a row has been selected
+ @param tableView tableView from object that you want
+ @param indexPath IndexPath of the selected row
+ */
+- (void)didSelectRowAtTableView:(UITableView *)tableView indexPath:(NSIndexPath *)indexPath;
+
+/**
+ Return the height of the object with indexPath
+ @param object Object of row
  @param indexPath IndexPath of row
  */
-- (CGFloat)heightForRowAtIndexPath:(NSIndexPath *)indexPath;
-
-/**
- Inform model that the cell will be displayed
- @param cell Cell that will be displayed
- @param indexPath indexPath of the cell that will be displayed
- */
-- (void)willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath;
-
-/**
- Change edition style of row at given indexPath
- @param editingStyle The cell editing style
- @param indexPath The indexPath of the cell
- */
-- (void)commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
-         forRowAtIndexPath:(NSIndexPath *)indexPath;
+- (CGFloat)cellHeightForObject:(id)object indexPath:(NSIndexPath *)indexPath;
 
 /**
  Block that must return an object for the given indexPath
@@ -100,14 +93,83 @@
 - (id)objectForRowAtIndexPath:(NSIndexPath *)indexPath;
 
 /**
+ Return object at tableView with indexPath
+ @param tableView tableView from object that you want
+ @param indexPath IndexPath from object that you want
+ */
+- (id)objectForRowAtTableView:(UITableView*)tableView indexPath:(NSIndexPath *)indexPath;
+
+/**
+ Return a cell for a given object
+ @param object Object to map
+ */
+- (UITableViewCell *)mapCellForObject:(id)object;
+
+/**
+ Reload items
+ */
+- (void)loadItems;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - UITableViewDataSource Helper
+
+/**
  Return a cell at given indexPath
  @param indexPath IndexPath from cell that you want
  */
 - (UITableViewCell *)cellForRowAtIndexPath:(NSIndexPath *)indexPath;
 
 /**
- Reload items
+ Return a cell at given indexPath
+ @param tableView tableView from object that you want
+ @param indexPath IndexPath from cell that you want
  */
-- (void)loadItems;
+- (UITableViewCell *)cellForRowAtTableView:(UITableView*)tableView indexPath:(NSIndexPath *)indexPath;
+
+/**
+ Return the height of the row
+ @param indexPath IndexPath of row
+ */
+- (CGFloat)heightForRowAtIndexPath:(NSIndexPath *)indexPath;
+
+/**
+ Return the height of the row
+ @param tableView tableView from object that you want
+ @param indexPath IndexPath of row
+ */
+- (CGFloat)heightForRowAtTableView:(UITableView*)tableView indexPath:(NSIndexPath *)indexPath;
+
+/**
+ Inform model that the cell will be displayed
+ @param cell Cell that will be displayed
+ @param indexPath indexPath of the cell that will be displayed
+ */
+- (void)willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath;
+
+/**
+ Inform model that the cell will be displayed
+ @param tableView tableView from object that you want
+ @param cell Cell that will be displayed
+ @param indexPath indexPath of the cell that will be displayed
+ */
+- (void)willDisplayAtTableView:(UITableView*)tableView cell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath;
+
+/**
+ Change edition style of row at given indexPath
+ @param editingStyle The cell editing style
+ @param indexPath The indexPath of the cell
+ */
+- (void)commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
+         forRowAtIndexPath:(NSIndexPath *)indexPath;
+
+/**
+ Change edition style of row at given indexPath
+ @param tableView tableView from object that you want
+ @param editingStyle The cell editing style
+ @param indexPath The indexPath of the cell
+ */
+- (void)commitAtTableView:(UITableView*)tableView editingStyle:(UITableViewCellEditingStyle)editingStyle
+        forRowAtIndexPath:(NSIndexPath *)indexPath;
 
 @end
