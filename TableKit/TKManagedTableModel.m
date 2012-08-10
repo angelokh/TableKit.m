@@ -8,6 +8,13 @@
 
 #import "TKManagedTableModel.h"
 
+@interface TKManagedTableModel () {
+@private
+    BOOL sectionHasChanged;
+    NSUInteger sectionInsertCount;
+}
+
+@end
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -153,9 +160,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)controllerWillChangeContent:(NSFetchedResultsController *)controller {
-    UITableView *tableView = [self tableViewForFetchedResultsController:controller];
+    sectionHasChanged = NO;
+    sectionInsertCount = 0;
+    UITableView *fetchTableView = [self tableViewForFetchedResultsController:controller];
 
-    [tableView beginUpdates];
+    [fetchTableView beginUpdates];
     
     if ([_fetchedResultsControllerDelegate respondsToSelector:@selector(controllerWillChangeContent:)]) {
         [_fetchedResultsControllerDelegate controllerWillChangeContent:controller];
@@ -170,32 +179,95 @@
      forChangeType:(NSFetchedResultsChangeType)type
       newIndexPath:(NSIndexPath *)newIndexPath {
     
-    UITableView *tableView = [self tableViewForFetchedResultsController:controller];
-    
+    UITableView *fetchTableView = [self tableViewForFetchedResultsController:controller];
+
     switch(type) {
             
         case NSFetchedResultsChangeInsert:
-            [tableView insertRowsAtIndexPaths:[NSArray arrayWithObject:newIndexPath]
+            [fetchTableView insertRowsAtIndexPaths:[NSArray arrayWithObject:newIndexPath]
                              withRowAnimation:UITableViewRowAnimationFade];
             break;
             
         case NSFetchedResultsChangeDelete:
-            [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
+            [fetchTableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
                              withRowAnimation:UITableViewRowAnimationFade];
             break;
+        
+        // http://iphonedevelopment.blogspot.com/2010/03/my-last-word-on-nsfetchedresultscontrol.html
+        /*case NSFetchedResultsChangeUpdate: {
+            NSString *sectionKeyPath = [controller sectionNameKeyPath];
+            if (sectionKeyPath == nil)
+                break;
+            NSManagedObject *changedObject = [controller objectAtIndexPath:indexPath];
+            NSArray *keyParts = [sectionKeyPath componentsSeparatedByString:@"."];
+            id currentKeyValue = [changedObject valueForKeyPath:sectionKeyPath];
+            for (int i = 0; i < [keyParts count] - 1; i++) {
+                NSString *onePart = [keyParts objectAtIndex:i];
+                changedObject = [changedObject valueForKey:onePart];
+            }
+            sectionKeyPath = [keyParts lastObject];
+            NSDictionary *committedValues = [changedObject committedValuesForKeys:nil];
             
+            if ([[committedValues valueForKeyPath:sectionKeyPath] isEqual:currentKeyValue])
+                break;
+            
+            NSUInteger tableSectionCount = [fetchTableView numberOfSections];
+            NSUInteger frcSectionCount = [[controller sections] count];
+            if (tableSectionCount + sectionInsertCount != frcSectionCount) {
+                // Need to insert a section
+                NSArray *sections = controller.sections;
+                NSInteger newSectionLocation = -1;
+                for (id oneSection in sections) {
+                    NSString *sectionName = [oneSection name];
+                    if ([currentKeyValue isEqual:sectionName]) {
+                        newSectionLocation = [sections indexOfObject:oneSection];
+                        break;
+                    }
+                }
+                if (newSectionLocation == -1)
+                    return; // uh oh
+                
+                if (!((newSectionLocation == 0) && (tableSectionCount == 1) && ([fetchTableView numberOfRowsInSection:0] == 0))) {
+                    [fetchTableView insertSections:[NSIndexSet indexSetWithIndex:newSectionLocation] withRowAnimation:UITableViewRowAnimationFade];
+                    sectionInsertCount++;
+                }
+                
+                NSUInteger indices[2] = {newSectionLocation, 0};
+                newIndexPath = [[NSIndexPath alloc] initWithIndexes:indices length:2];
+            }
+        }
+        case NSFetchedResultsChangeMove: {
+            if (newIndexPath != nil) {
+                NSUInteger tableSectionCount = [fetchTableView numberOfSections];
+                NSUInteger frcSectionCount = [[controller sections] count];
+                if (frcSectionCount != tableSectionCount + sectionInsertCount)  {
+                    [fetchTableView insertSections:[NSIndexSet indexSetWithIndex:[newIndexPath section]] withRowAnimation:UITableViewRowAnimationNone];
+                    sectionInsertCount++;
+                }
+                
+                [fetchTableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
+                [fetchTableView insertRowsAtIndexPaths: [NSArray arrayWithObject:newIndexPath]
+                                      withRowAnimation: UITableViewRowAnimationRight];
+                
+            }
+            else {
+                [fetchTableView reloadSections:[NSIndexSet indexSetWithIndex:[indexPath section]] withRowAnimation:UITableViewRowAnimationFade];
+            }
+            break;
+        }
+        default:
+            break;*/
         case NSFetchedResultsChangeUpdate:
-            [tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
+            [fetchTableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
                              withRowAnimation:UITableViewRowAnimationNone];
             break;
-            
         case NSFetchedResultsChangeMove:
-            [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
+            [fetchTableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
                              withRowAnimation:UITableViewRowAnimationFade];
             
-            [tableView insertRowsAtIndexPaths:[NSArray arrayWithObject:newIndexPath]
+            [fetchTableView insertRowsAtIndexPaths:[NSArray arrayWithObject:newIndexPath]
                              withRowAnimation:UITableViewRowAnimationFade];
-            break;
+            break;     
     }
     
     if ([_fetchedResultsControllerDelegate respondsToSelector:@selector(controller:didChangeObject:atIndexPath:forChangeType:newIndexPath:)]) {
@@ -207,25 +279,48 @@
     }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)controller:(NSFetchedResultsController *)controller didChangeSection:(id )sectionInfo atIndex:(NSUInteger)sectionIndex forChangeType:(NSFetchedResultsChangeType)type {
+- (void)controller:(NSFetchedResultsController *)controller 
+  didChangeSection:(id )sectionInfo
+           atIndex:(NSUInteger)sectionIndex
+     forChangeType:(NSFetchedResultsChangeType)type {
 
-    UITableView *tableView = [self tableViewForFetchedResultsController:controller];
-
+    UITableView *fetchTableView = [self tableViewForFetchedResultsController:controller];
+    /*switch(type) {
+            
+        case NSFetchedResultsChangeInsert:
+            if (!((sectionIndex == 0) && ([fetchTableView numberOfSections] == 1))) {
+                [fetchTableView insertSections:[NSIndexSet indexSetWithIndex:sectionIndex] withRowAnimation:UITableViewRowAnimationFade];
+                sectionInsertCount++;
+            }
+            break;
+        case NSFetchedResultsChangeDelete:
+            if (!((sectionIndex == 0) && ([fetchTableView numberOfSections] == 1) )) {
+                [fetchTableView deleteSections:[NSIndexSet indexSetWithIndex:sectionIndex] withRowAnimation:UITableViewRowAnimationFade];
+                sectionInsertCount--;
+            }
+            break;
+        case NSFetchedResultsChangeMove:
+            break;
+        case NSFetchedResultsChangeUpdate: 
+            break;
+        default:
+            break;
+    }*/
     switch(type) {
             
         case NSFetchedResultsChangeInsert:
-            [tableView insertSections:[NSIndexSet indexSetWithIndex:sectionIndex]
+            [fetchTableView insertSections:[NSIndexSet indexSetWithIndex:sectionIndex]
                           withRowAnimation:UITableViewRowAnimationFade];
             break;
             
         case NSFetchedResultsChangeDelete:
-            [tableView deleteSections:[NSIndexSet indexSetWithIndex:sectionIndex]
+            [fetchTableView deleteSections:[NSIndexSet indexSetWithIndex:sectionIndex]
                           withRowAnimation:UITableViewRowAnimationFade];
             break;
     }
     
+    sectionHasChanged = YES;
     if ([_fetchedResultsControllerDelegate respondsToSelector:@selector(controller:didChangeSection:atIndex:forChangeType:)]) {
         [_fetchedResultsControllerDelegate controller:controller
                                      didChangeSection:sectionInfo
@@ -237,12 +332,16 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)controllerDidChangeContent:(NSFetchedResultsController *)controller {
-    UITableView *tableView = [self tableViewForFetchedResultsController:controller];
-    [tableView endUpdates];
-    
+    UITableView *fetchTableView = [self tableViewForFetchedResultsController:controller];
+    [fetchTableView endUpdates];
+    //reload all sections
+    if(sectionHasChanged){
+        [fetchTableView reloadSections:[NSIndexSet 
+                                   indexSetWithIndexesInRange:NSMakeRange(0, fetchTableView.numberOfSections)] 
+                      withRowAnimation:UITableViewRowAnimationNone];
+    }
     if ([_fetchedResultsControllerDelegate respondsToSelector:@selector(controllerDidChangeContent:)]) {
         [_fetchedResultsControllerDelegate controllerDidChangeContent:controller];
-    }
 }
 
 #pragma mark - Content Filtering
